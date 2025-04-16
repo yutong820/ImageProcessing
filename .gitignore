@@ -16,6 +16,7 @@
 *.ncb
 *.ipch
 *.ilk
+*.gitignore
 
 x64/
 Debug/

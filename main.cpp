@@ -1,6 +1,6 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
-#include "resize.h"  // 引入 Resize 模块
+#include "Resize/resize.h"  // 引入 Resize 模块
 
 int main() {
     // 读取图像
