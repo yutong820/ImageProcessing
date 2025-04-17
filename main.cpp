@@ -1,6 +1,7 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include "Resize/resize.h"  
+#include "Rotate/rotate.h" 
 
 int main() {
     // read image
@@ -10,14 +11,31 @@ int main() {
         return -1;
     }
 
-    //  resizeImage() zoom in 
-    cv::Mat resized;
-    resizeImage(img, resized, 0.25, 0.25);  // fx = fy = 0.5 reduced to 1/4
+    int choice;
+    std::cout << "please choose: \n1. image resize\n2. image rotate\ninput number: ";
+    std::cin >> choice;
+
+    cv::Mat result;
+
+    if (choice == 1) {
+        resizeImage(img, result, 0.25, 0.25);
+        cv::imshow("after scaling", result);
+    }
+    else if (choice == 2) {
+        double angle;
+        std::cout << "input rotation angle: ";
+        std::cin >> angle;
+        rotateImage(img, result, angle);
+        cv::imshow("after rotation", result);
+    }
+    else
+    {
+        std::cerr << "invalid option" << std::endl;
+        return -1;
+    }
 
     // display
     cv::imshow("origianl", img);
-    cv::imshow("resized", resized);
-
     cv::waitKey(0);\
     return 0;
 }
