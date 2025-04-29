@@ -2,6 +2,7 @@
 #include <iostream>
 #include "GammaCorrection/gamma_correction.h" 
 #include "utils.h"
+#include "Resize/resize.h" 
 
 int main() {
     cv::Mat img = cv::imread("D:\\360MoveData\\Users\\DELL\\Desktop\\example.jpg");
@@ -21,13 +22,17 @@ int main() {
         std::cin >> gamma;
 
         cv::Mat gammaCorrected;
+        cv::Mat original;
+        cv::Mat result;
         applyGammaCorrection(img, gammaCorrected, gamma);
 
-        showImage(img, "original image");
+        resizeImage(img, original, 0.5, 0.5);
+        cv::imshow("original image", original);
         drawHistogram(img, "original histogram");
 
-        showImage(gammaCorrected, "Corrected image");
-        drawHistogram(gammaCorrected, "corrected histogram");
+        resizeImage(gammaCorrected, result, 0.5, 0.5);
+        cv::imshow("Corrected image", result);
+        drawHistogram(result, "corrected histogram");
 
         cv::waitKey(0);
     }
