@@ -4,19 +4,24 @@
 #include "smoothing.h"
 
 void putLabel(cv::Mat& img, const std::string& text) {
-    cv::putText(img, text, cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 255), 2);
+    cv::putText(img, text, cv::Point(10, 20), cv::FONT_HERSHEY_SIMPLEX, 0.55, cv::Scalar(0, 0, 255), 1);
 }
 
 int main() {
-    cv::Mat img = cv::imread("D:/360MoveData/Users/DELL/Desktop/example.jpg");
+    cv::Mat img = cv::imread("D:/360MoveData/Users/DELL/Desktop/opencv/example.jpg");
 
-    cv::resize(img, img, cv::Size(), 0.5, 0.4);
+    cv::resize(img, img, cv::Size(), 0.2, 0.2);
     std::vector<std::string> methods = { "mean", "gaussian", "median", "bilateral" };
     std::vector<int> params = { 3, 5, 7, 9 };
 
     std::vector<cv::Mat> all_rows;
     for (const auto& method : methods) {
         std::vector<cv::Mat> row;
+        cv::Mat original_copy;
+        img.copyTo(original_copy);
+        putLabel(original_copy, "Original");
+        row.push_back(original_copy);
+
         for (int param : params) {
             cv::Mat result;
 
