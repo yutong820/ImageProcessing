@@ -1,5 +1,8 @@
 #include <opencv2/opencv.hpp>
 #include "include/edge_methods.hpp"
+#include "include/prewitt_cuda.hpp"  // CUDA header
+#include <chrono>
+
 
 void putLabel(cv::Mat& img, const std::string& text) {
     cv::putText(img, text, cv::Point(10, 25), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 255), 2);
@@ -19,9 +22,42 @@ cv::Mat mergeMagnitude(const cv::Mat& gx, const cv::Mat& gy) {
     return magnitude;
 }
 
+cv::Mat runPrewittCUDA(const cv::Mat& gray) {
+    int width = gray.cols;
+    int height = gray.rows;
+    size_t img_size = width * height * sizeof(unsigned char);
+
+    unsigned char* d_input, * d_output;
+    cudaMalloc(&d_input, img_size);
+    cudaMalloc(&d_output, img_size);
+    cudaMemcpy(d_input, gray.data, img_size, cudaMemcpyHostToDevice);
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+    std::cout << "[DEBUG] launchPrewitt called..." << std::endl;
+    launchPrewitt(d_input, d_output, width, height);
+    cudaDeviceSynchronize();
+    auto t2 = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = t2 - t1;
+    std::cout << "CUDA Prewitt time: " << elapsed.count() << " sec" << std::endl;
+
+    std::vector<unsigned char> result_data(width * height);
+    cudaMemcpy(result_data.data(), d_output, img_size, cudaMemcpyDeviceToHost);
+
+    // release memory
+    cudaFree(d_input);
+    cudaFree(d_output);
+
+    return cv::Mat(height, width, CV_8UC1, result_data.data()).clone();
+}
+
 int main() {
     cv::Mat gray = cv::imread("D:/360MoveData/Users/DELL/Desktop/example.jpg", cv::IMREAD_GRAYSCALE);
 
+    std::cout << "[DEBUG] main started\n";
+    cv::Mat result = runPrewittCUDA(gray);
+    std::cout << "[DEBUG] returned from runPrewittCUDA\n";
+
+    
     cv::resize(gray, gray, cv::Size(), 0.4,0.4);
     std::vector<cv::Mat> all_rows;
     std::vector<cv::Mat> all_cols;
@@ -39,9 +75,10 @@ int main() {
         //cv::Mat disp; cv::hconcat(row, disp); all_rows.push_back(disp);
     }
 
-    // Prewitt
+    // CPU Prewitt
     {
-        std::vector<cv::Mat> row;
+        /*std::vector<cv::Mat> row;*/
+        auto cpu_start = std::chrono::high_resolution_clock::now();
         cv::Mat gx = applyPrewitt(gray, 1, 0);
         cv::Mat gy = applyPrewitt(gray, 0, 1);
         cv::Mat mag;
@@ -52,9 +89,17 @@ int main() {
         //addLabeledResult(row, gray, "Original");
         //addLabeledResult(row, gx, "Prewitt X");
         //addLabeledResult(row, gy, "Prewitt Y");
+        auto cpu_end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> cpu_time = cpu_end - cpu_start;
+        std::cout << "CPU Prewitt time: " << cpu_time.count() << " sec" << std::endl;
         addLabeledResult(all_cols, mag, "Prewitt |G|");
   /*      cv::Mat disp; cv::hconcat(row, disp); all_rows.push_back(disp);*/
     }
+
+    // CUDA Prewitt
+    cv::Mat cuda_result = runPrewittCUDA(gray);
+    addLabeledResult(all_cols, cuda_result, "CUDA Prewitt");
+
 
     // Scharr
     {
