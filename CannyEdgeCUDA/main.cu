@@ -20,9 +20,9 @@ int lowThreshold = 20, // %
 highThreshold = 60;
 string media = "image"; // or video
 
-dim3 blockSize = dim3(16, 16, 1);
+dim3 blockSize = dim3(16, 16, 1); // thread dimensions of each block
 
-float* devGaussKernel; // Stored on the device
+float* devGaussKernel; // Gaussian convolution kernel pointer
 
 inline void _checkCudaError(const char* file, int line, const char* function) {
     cudaError_t err = cudaGetLastError();
@@ -156,6 +156,7 @@ void initGauss() {
     cudaMemcpy(devGaussKernel, (float*)kernel, kernelDataSize, cudaMemcpyHostToDevice);
 }
 
+// sliding
 void onTrackbar(int, void* userdata) {
     if (lowThreshold > highThreshold) {
         printf("Let's be reasonable here\n");
@@ -206,6 +207,7 @@ void handleVideo(string& inPath) {
         printf("Could not open the video: %s\n", inPath.c_str());
         return;
     }
+    printf("Video opened successfully\n");
 
     Mat frame;
 
